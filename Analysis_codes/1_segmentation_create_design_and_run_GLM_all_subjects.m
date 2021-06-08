@@ -4,7 +4,7 @@ data_parent_dir = '/Users/mpeer/Dropbox (Epstein Lab)/Epstein Lab Team Folder/Mi
 names = {'trans_x', 'trans_y', 'trans_z', 'rot_x', 'rot_y', 'rot_z', 'framewise_displacement', 'csf', 'white_matter'};      % Confounds to use
 num_confounds = length(names);
 % Reading the subjects file, with the path of all logfiles for each subject
-[~, ~, subjects_file_data]= xlsread(fullfile(data_parent_dir, 'fMRI_experiment_logfiles/Subjects_file_fMRI.xlsx')); 
+[~, ~, subjects_file_data]= xlsread(fullfile(data_parent_dir, 'fMRI_experiment_logfiles/Subjects_file_fMRI.xlsx'));
 subjects_file_data = subjects_file_data(4:end, :);
 for i = 1:size(subjects_file_data,1), if isnan(subjects_file_data{i,1}), subjects_file_data = subjects_file_data(1:i-1,:); break; end,end       % Getting rid of rows without subjects data
 subj_data_dirs = subjects_file_data(:,29);
@@ -76,7 +76,7 @@ for subj = 1:size(subjects_file_data, 1)
     if ~exist(curr_subj_objectviewing_combined_day1_dir, 'dir'), mkdir(curr_subj_objectviewing_combined_day1_dir); end
     if ~exist(curr_subj_objectviewing_combined_day2_dir, 'dir'), mkdir(curr_subj_objectviewing_combined_day2_dir); end
     if ~exist(curr_subj_jrd_combined_dir, 'dir'), mkdir(curr_subj_jrd_combined_dir); end
-
+    
     
     % Copying the design matrix files to each relevant directory
     curr_file = fullfile(subjects_file_data{subj, 27}, [subjects_file_data{subj, 15}, '.mat']); copyfile(curr_file, curr_subj_localizer_analysis_dir);  % Functional localizer files
@@ -173,7 +173,7 @@ for subj = 1:length(subj_data_dirs)
     all_func_data_files = dir(fullfile(curr_subj_session_1_dir, '*preproc_bold.nii'));
     all_func_data_files = [all_func_data_files; dir(fullfile(curr_subj_session_2_dir, '*preproc_bold.nii'))];
     all_func_data_files = all_func_data_files(cellfun(@isempty, strfind({all_func_data_files.name},'sm_')));    % Removing already-smoothed files from the list
-
+    
     for r = 1:length(all_func_data_files)
         n = nifti(fullfile(all_func_data_files(r).folder, all_func_data_files(r).name)); num_volumes = size(n.dat, 4); clear n;     % Finding out the number of runs
         matlabbatch{1}.spm.spatial.smooth.data = cell(num_volumes, 1);     % The actual data
@@ -185,7 +185,7 @@ for subj = 1:length(subj_data_dirs)
             spm_jobman('run', matlabbatch);
         end
     end
-
+    
     clear matlabbatch;
 end
 
@@ -334,7 +334,7 @@ for subj = 1:length(subj_data_dirs)
         % Running the design creation and estimation script
         spm_jobman('run', matlabbatch);
     end
-
+    
     % Defining design and running GLM for JRD runs - adaptation analysis
     clear matlabbatch;
     matlabbatch{1}.spm.stats.fmri_spec.timing.units = 'secs';
@@ -464,7 +464,7 @@ for subj = 1:length(subj_data_dirs)
             for v = 1:num_volumes
                 matlabbatch{1}.spm.stats.fmri_spec.sess.scans{v} = [fullfile(jrd_data_files(r).folder, jrd_data_files(r).name), ',', num2str(v)];
             end
-            % Running the estimation for each run separately
+            % Running the estimation for each trial separately
             for i = 1:length(all_onsets)
                 if exist(fullfile(curr_subj_jrd_singletrials_temp_dirs{r}, 'SPM.mat')), delete(fullfile(curr_subj_jrd_singletrials_temp_dirs{r}, 'SPM.mat')); end
                 % Defining all of the regressors - one for the specific trial, the other for all the rest
@@ -480,7 +480,7 @@ for subj = 1:length(subj_data_dirs)
                 matlabbatch{1}.spm.stats.fmri_spec.sess.multi = {temp_design_file_name};      % Defining the design file in the SPM matlab batch
                 % Running the design creation and estimation script
                 spm_jobman('run', matlabbatch);
-                % Copying the resulting beta1 (the single-trial estimate) to the parent directory
+                % Copying the resulting beta1 (the current trial estimate) to the parent directory
                 copyfile(fullfile(curr_subj_jrd_singletrials_temp_dirs{r}, 'beta_0001.nii'), fullfile(curr_subj_jrd_singletrials_analysis_dirs{r}, ['singletrial_beta_time_',num2str(onsets{1},'%03.0f'),'.nii']));
             end
         end
@@ -600,7 +600,7 @@ for subj = 1:length(subj_data_dirs)
         % Running the design creation and estimation script
         spm_jobman('run', matlabbatch);
     end
-
+    
     clear matlabbatch;
 end
 
@@ -627,7 +627,7 @@ for subj = 1:length(subj_data_dirs)
     curr_subj_objectviewing_combined_day1_dir = fullfile(curr_subj_objectviewing_analysis_dir, 'Combined_runs_day1');
     curr_subj_objectviewing_combined_day2_dir = fullfile(curr_subj_objectviewing_analysis_dir, 'Combined_runs_day2');
     curr_subj_jrd_combined_dir = fullfile(curr_subj_jrd_analysis_dir, 'Combined_runs');
-
+    
     % Functional localizer contrasts
     SPMmat_filename = fullfile(curr_subj_localizer_analysis_dir, 'SPM.mat');
     % Deleting existing contrasts
@@ -726,7 +726,7 @@ for subj = 1:length(subj_data_dirs)
     matlabbatch{1}.spm.stats.con.consess{3}.tcon.sessrep = 'none';
     spm_jobman('run', matlabbatch);
     clear matlabbatch;
-
+    
     % JRD adaptation contrasts
     SPMmat_filename = fullfile(curr_subj_jrd_adaptation_analysis_dir, 'SPM.mat');
     if exist(SPMmat_filename)
@@ -753,7 +753,7 @@ for subj = 1:length(subj_data_dirs)
         spm_jobman('run', matlabbatch);
         clear matlabbatch;
     end
-
+    
     % JRD univariate contrasts
     SPMmat_filename = fullfile(curr_subj_jrd_univariate_analysis_dir, 'SPM.mat');
     if exist(SPMmat_filename)
@@ -830,7 +830,7 @@ for subj = 1:length(subj_data_dirs)
         spm_jobman('run', matlabbatch);
         clear matlabbatch;
     end
-
+    
     % JRD combined runs contrasts - one per object, combined across runs
     SPMmat_filename = fullfile(curr_subj_jrd_combined_dir, 'SPM.mat');
     if exist(SPMmat_filename)
@@ -853,6 +853,90 @@ for subj = 1:length(subj_data_dirs)
         end
         spm_jobman('run', matlabbatch);
         clear matlabbatch;
+    end
+    
+    
+    
+    %%
+    % Defining design and running GLM for object viewing runs - adaptation analysis - integration model - day 2 only
+    clear matlabbatch;
+    matlabbatch{1}.spm.stats.fmri_spec.timing.units = 'secs';
+    matlabbatch{1}.spm.stats.fmri_spec.timing.RT = 2;
+    matlabbatch{1}.spm.stats.fmri_spec.timing.fmri_t = 16;
+    matlabbatch{1}.spm.stats.fmri_spec.timing.fmri_t0 = 8;
+    matlabbatch{1}.spm.stats.fmri_spec.fact = struct('name', {}, 'levels', {});
+    matlabbatch{1}.spm.stats.fmri_spec.bases.hrf.derivs = [0 0];
+    matlabbatch{1}.spm.stats.fmri_spec.volt = 1;
+    matlabbatch{1}.spm.stats.fmri_spec.global = 'None';
+    matlabbatch{1}.spm.stats.fmri_spec.mthresh = 0.8;
+    matlabbatch{1}.spm.stats.fmri_spec.mask = {''};
+    matlabbatch{1}.spm.stats.fmri_spec.cvi = 'AR(1)';
+    matlabbatch{2}.spm.stats.fmri_est.write_residuals = 0;
+    matlabbatch{2}.spm.stats.fmri_est.method.Classical = 1;
+    object_viewing_adaptation_data_files = dir(fullfile(curr_subj_session_2_dir, 'sm_*object_viewing*preproc_bold.nii'));
+    curr_subj_objectviewing_adaptation_analysis_dir = fullfile(curr_subj_analysis_dir, 'Analysis_objectviewing_adaptation');
+    matlabbatch{1}.spm.stats.fmri_spec.sess = struct();
+    design_file = dir(fullfile(curr_subj_objectviewing_adaptation_analysis_dir, '*Segmentation*.mat'));
+    confounds_file = dir(fullfile(curr_subj_objectviewing_adaptation_analysis_dir, '*confounds.mat'));
+    for r = 1:2     % Defining specific parameters for each run
+        n = nifti(fullfile(object_viewing_adaptation_data_files(r).folder, object_viewing_adaptation_data_files(r).name)); num_volumes = size(n.dat, 4); clear n;
+        matlabbatch{1}.spm.stats.fmri_spec.dir = {curr_subj_objectviewing_adaptation_analysis_dir};    % The output directory
+        matlabbatch{1}.spm.stats.fmri_spec.sess(r).cond = struct('name', {}, 'onset', {}, 'duration', {}, 'tmod', {}, 'pmod', {}, 'orth', {});
+        matlabbatch{1}.spm.stats.fmri_spec.sess(r).regress = struct('name', {}, 'val', {});
+        matlabbatch{1}.spm.stats.fmri_spec.sess(r).hpf = 128;
+        matlabbatch{1}.spm.stats.fmri_spec.sess(r).multi = {fullfile(curr_subj_objectviewing_adaptation_analysis_dir, design_file(r+2).name)};      % The design file
+        matlabbatch{1}.spm.stats.fmri_spec.sess(r).multi_reg = {fullfile(curr_subj_objectviewing_adaptation_analysis_dir, confounds_file(r+2).name)};      % The confounds file
+        matlabbatch{1}.spm.stats.fmri_spec.sess(r).scans = cell(num_volumes, 1);     % The actual data
+        for v = 1:num_volumes
+            matlabbatch{1}.spm.stats.fmri_spec.sess(r).scans{v} = [fullfile(object_viewing_adaptation_data_files(r).folder, object_viewing_adaptation_data_files(r).name), ',', num2str(v)];
+        end
+    end
+    if ~exist(fullfile(curr_subj_objectviewing_adaptation_analysis_dir, 'SPM.mat'), 'file')        % Checking if SPM.mat file already exists, running if not
+        matlabbatch{2}.spm.stats.fmri_est.spmmat = {fullfile(curr_subj_objectviewing_adaptation_analysis_dir, 'SPM.mat')};     % The resulting design file from the first stage, to be estimated
+        % Running the design creation and estimation script
+        spm_jobman('run', matlabbatch);
+    end
+    
+    % Defining design and running GLM for JRD runs - adaptation analysis
+    clear matlabbatch;
+    matlabbatch{1}.spm.stats.fmri_spec.timing.units = 'secs';
+    matlabbatch{1}.spm.stats.fmri_spec.timing.RT = 2;
+    matlabbatch{1}.spm.stats.fmri_spec.timing.fmri_t = 16;
+    matlabbatch{1}.spm.stats.fmri_spec.timing.fmri_t0 = 8;
+    matlabbatch{1}.spm.stats.fmri_spec.fact = struct('name', {}, 'levels', {});
+    matlabbatch{1}.spm.stats.fmri_spec.bases.hrf.derivs = [0 0];
+    matlabbatch{1}.spm.stats.fmri_spec.volt = 1;
+    matlabbatch{1}.spm.stats.fmri_spec.global = 'None';
+    matlabbatch{1}.spm.stats.fmri_spec.mthresh = 0.8;
+    matlabbatch{1}.spm.stats.fmri_spec.mask = {''};
+    matlabbatch{1}.spm.stats.fmri_spec.cvi = 'AR(1)';
+    matlabbatch{2}.spm.stats.fmri_est.write_residuals = 0;
+    matlabbatch{2}.spm.stats.fmri_est.method.Classical = 1;
+    jrd_data_files = dir(fullfile(curr_subj_session_2_dir, 'sm_*jrd*preproc_bold.nii'));
+    curr_subj_jrd_adaptation_analysis_dir = fullfile(curr_subj_analysis_dir, 'Analysis_JRD_adaptation');
+    design_file = dir(fullfile(curr_subj_jrd_adaptation_analysis_dir, '*Segmentation*.mat'));
+    confounds_file = dir(fullfile(curr_subj_jrd_adaptation_analysis_dir, '*confounds.mat'));
+    exist_jrd = 0;
+    for r = 1:length(jrd_data_files)     % Defining specific parameters for each run
+        if exist(fullfile(jrd_data_files(r).folder, jrd_data_files(r).name))
+            exist_jrd = 1;
+            n = nifti(fullfile(jrd_data_files(r).folder, jrd_data_files(r).name)); num_volumes = size(n.dat, 4); clear n;
+            matlabbatch{1}.spm.stats.fmri_spec.dir = {curr_subj_jrd_adaptation_analysis_dir};    % The output directory
+            matlabbatch{1}.spm.stats.fmri_spec.sess(r).cond = struct('name', {}, 'onset', {}, 'duration', {}, 'tmod', {}, 'pmod', {}, 'orth', {});
+            matlabbatch{1}.spm.stats.fmri_spec.sess(r).regress = struct('name', {}, 'val', {});
+            matlabbatch{1}.spm.stats.fmri_spec.sess(r).hpf = 128;
+            matlabbatch{1}.spm.stats.fmri_spec.sess(r).multi = {fullfile(curr_subj_jrd_adaptation_analysis_dir, design_file(r).name)};      % The design file
+            matlabbatch{1}.spm.stats.fmri_spec.sess(r).multi_reg = {fullfile(curr_subj_jrd_adaptation_analysis_dir, confounds_file(r).name)};      % The confounds file
+            matlabbatch{1}.spm.stats.fmri_spec.sess(r).scans = cell(num_volumes, 1);     % The actual data
+            for v = 1:num_volumes
+                matlabbatch{1}.spm.stats.fmri_spec.sess(r).scans{v} = [fullfile(jrd_data_files(r).folder, jrd_data_files(r).name), ',', num2str(v)];
+            end
+        end
+    end
+    if ~exist(fullfile(curr_subj_jrd_adaptation_analysis_dir, 'SPM.mat'), 'file') & exist_jrd == 1        % Checking if SPM.mat file already exists, running if not
+        matlabbatch{2}.spm.stats.fmri_est.spmmat = {fullfile(curr_subj_jrd_adaptation_analysis_dir, 'SPM.mat')};     % The resulting design file from the first stage, to be estimated
+        % Running the design creation and estimation script
+        spm_jobman('run', matlabbatch);
     end
 
 end
@@ -881,7 +965,7 @@ for subj = 1:length(subj_data_dirs)
     disp(subj)
     curr_subj_analysis_dir = fullfile(fullfile(data_parent_dir, subj_data_dirs{subj}), 'Analysis');
     curr_subj_localizer_analysis_dir = fullfile(curr_subj_analysis_dir, 'Analysis_localizer');
-
+    
     % Defining subject specific functional ROIs (from the localizer run, masked with the Julian et al. ROIs) and combining bilaterally
     all_ROIs_individual_temp = all_ROIs;
     for i = 1:length(all_ROIs)
@@ -972,7 +1056,7 @@ for subj = 1:length(subj_data_dirs)
         for i=1:length(all_ROIs)
             current_threshold = min(maxk(objectviewing_contrast(all_ROIs{i} == 1), 100));       % Choosing the 100 voxels with the maximal t value inside the ROI
             temp_ROIs_objview{i} = all_ROIs{i} & (objectviewing_contrast >= current_threshold);     % masking the first ROIs with the individual localizer images
-        end        
+        end
     else
         for i=1:length(all_ROIs)
             temp_ROIs_objview{i} = nan(size(all_ROIs{1}));
@@ -990,20 +1074,20 @@ end
 new_ROI_names = {'RSC','OPA','PPA','HC'};
 for subj = 1:length(subj_data_dirs)
     disp(subj)
-
+    
     % Defining current subject directories
     curr_subj_analysis_dir = fullfile(fullfile(data_parent_dir, subj_data_dirs{subj}), 'Analysis');
     curr_subj_localizer_analysis_dir = fullfile(curr_subj_analysis_dir, 'Analysis_localizer');
-
+    
     for i = 1:length(new_ROI_names)
         curr_l_ROI_jrd = spm_read_vols(spm_vol(fullfile(curr_subj_localizer_analysis_dir, ['l', new_ROI_names{i}, '_activation_jrd_individual.nii'])));
         curr_r_ROI_jrd = spm_read_vols(spm_vol(fullfile(curr_subj_localizer_analysis_dir, ['r', new_ROI_names{i}, '_activation_jrd_individual.nii'])));
         curr_l_ROI_objview = spm_read_vols(spm_vol(fullfile(curr_subj_localizer_analysis_dir, ['l', new_ROI_names{i}, '_activation_objview_individual.nii'])));
         curr_r_ROI_objview = spm_read_vols(spm_vol(fullfile(curr_subj_localizer_analysis_dir, ['r', new_ROI_names{i}, '_activation_objview_individual.nii'])));
-
+        
         curr_bilat_ROI_jrd = curr_l_ROI_jrd + curr_r_ROI_jrd;
         curr_bilat_ROI_objview = curr_l_ROI_objview + curr_r_ROI_objview;
-
+        
         save_mat_to_nifti(betas_file1, curr_bilat_ROI_jrd, fullfile(curr_subj_localizer_analysis_dir, ['bilat_', new_ROI_names{i}, '_activation_jrd_individual.nii']));
         save_mat_to_nifti(betas_file1, curr_bilat_ROI_objview, fullfile(curr_subj_localizer_analysis_dir, ['bilat_', new_ROI_names{i}, '_activation_objview_individual.nii']));
     end
